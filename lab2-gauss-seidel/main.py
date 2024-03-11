@@ -10,7 +10,7 @@ class Result:
     isMethodApplicable = True
     errorMessage = ""
 
-    def applicable(n, matrix, epsilon):
+    def is_applicable(n, matrix, epsilon):
         for i in range(n):
             sum_of_abs = sum(abs(matrix[i][j]) for j in range(n) if i != j)
             if abs(matrix[i][i]) <= sum_of_abs:
@@ -21,20 +21,19 @@ class Result:
     
     
     def solveByGaussSeidel(n, matrix, epsilon):
-        if not Result.applicable(n, matrix, epsilon):
+        if not Result.is_applicable(n, matrix, epsilon):
             return []
         
-        solution = [0.0] * n
+        tmp = [0.0] * n
 
         while True:
-            new_solution = [0.0] * n
-            for i in range(n):
-                sum_of_elements = sum(matrix[i][j] * solution[j] for j in range(n) if i != j)
-                new_solution[i] = (matrix[i][n] - sum_of_elements) / matrix[i][i]
-            if all(abs(new_solution[i] - solution[i]) < epsilon for i in range(n)):
-                return new_solution
+            result = [0.0] * n
+            for i in range(n): 
+                result[i] = (matrix[i][n] - sum(matrix[i][j] * tmp[j] for j in range(n) if i != j)) / matrix[i][i]
+            if all(abs(result[i] - tmp[i]) < epsilon for i in range(n)):
+                return result
 
-            solution = new_solution
+            tmp = result
             
             
 if __name__ == '__main__':
