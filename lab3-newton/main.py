@@ -62,7 +62,7 @@ def get_functions(n: int):
         return [default_function]
 
 
-def transform_equations(funcs, x):
+def solve_equations(funcs, x):
     return [func(x) for func in funcs]
 
 def jacobian(funcs, x):
@@ -110,7 +110,7 @@ def inverse_matrix(matrix):
 
 def iterate(funcs, x):
     jac = jacobian(funcs, x)
-    f_val = transform_equations(funcs, x)
+    f_val = solve_equations(funcs, x)
 
     jac_inv = inverse_matrix(jac)
 
