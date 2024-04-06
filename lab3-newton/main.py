@@ -61,81 +61,31 @@ def get_functions(n: int):
     else:
         return [default_function]
 
+def transform(fs, xs):
+    return [fs[i](xs[i]) for i in range(len(fs))]
 
-def transform_equations(funcs, x):
-    return [func(x) for func in funcs]
+def jacobian(funcs, vars_values):
+    n = len(funcs)
+    m = len(vars_values)
+    h = 1e-8
 
-def jacobian(funcs, x):
-    h = 1e-5
-    jac = []
-    for i in range(len(x)):
-        row = []
-        for j in range(len(x)):
-            df_dx = (funcs[i]([x[k] + (h if k == j else 0) for k in range(len(x))]) - funcs[i](x)) / h
-            row.append(df_dx)
-        jac.append(row)
-    return jac
-
-def multiply_matrix_vector(matrix, vector):
-    return [sum(matrix[i][j] * vector[j] for j in range(len(vector))) for i in range(len(matrix))]
-
-def inverse_matrix(matrix):
-    n = len(matrix)
-    identity_matrix = [[1 if i == j else 0 for j in range(n)] for i in range(n)]
-
+    J = []
     for i in range(n):
-        if matrix[i][i] == 0:
-            continue
+        row = []
+        for j in range(m):
+            dx = [0] * m
+            dx[j] = h
+            f_plus = funcs[i](*[var + dvar for var, dvar in zip(vars_values, dx)])
+            f_minus = funcs[i](*[var - dvar for var, dvar in zip(vars_values, dx)])
+            row.append((f_plus - f_minus) / (2 * h))
+        J.append(row)
 
-        pivot = matrix[i][i]
-        for j in range(i, n):
-            matrix[i][j] /= pivot
-        for j in range(n):
-            identity_matrix[i][j] /= pivot
-
-        for k in range(i + 1, n):
-            coefficient = matrix[k][i]
-            for j in range(i, n):
-                matrix[k][j] -= coefficient * matrix[i][j]
-            for j in range(n):
-                identity_matrix[k][j] -= coefficient * identity_matrix[i][j]
-
-    for i in range(n - 1, 0, -1):
-        for k in range(i - 1, -1, -1):
-            coefficient = matrix[k][i]
-            for j in range(n):
-                identity_matrix[k][j] -= coefficient * identity_matrix[i][j]
-
-    return identity_matrix
-
-def iterate(funcs, x):
-    jac = jacobian(funcs, x)
-    f_val = transform_equations(funcs, x)
-
-    jac_inv = inverse_matrix(jac)
-
-    delta = multiply_matrix_vector(jac_inv, f_val)
-
-    x_new = [x[i] - delta[i] for i in range(len(x))]
-
-    return x_new
+    return J
+        
 
 def solve_by_fixed_point_iterations(system_id, number_of_unknowns, initial_approximations):
     funcs = get_functions(system_id)
-
-    x = initial_approximations
-
-    max_iter = 1000
-
-    epsilon = 0.0001
-
-    for _ in range(max_iter):
-        x_new = iterate(funcs, x)
-        sum_of_squares = sum((x_new[i] - x[i]) ** 2 for i in range(number_of_unknowns))
-        if sum_of_squares ** 0.5 < epsilon:
-            return x_new
-        x = x_new
-    raise ValueError(f"The method did not converge after {max_iter} iterations")
+    return jacobian(funcs, initial_approximations)
 
 
 if __name__ == '__main__':
